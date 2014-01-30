@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:context="http://www.springframework.org/schema/context" xmlns:tracking="http://www.mulesoft.org/schema/mule/ee/tracking" xmlns:data-mapper="http://www.mulesoft.org/schema/mule/ee/data-mapper" xmlns:twitter="http://www.mulesoft.org/schema/mule/twitter" xmlns:sfdc="http://www.mulesoft.org/schema/mule/sfdc" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+	xmlns:spring="http://www.springframework.org/schema/beans" version="EE-3.5.0"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-current.xsd
+http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/sfdc http://www.mulesoft.org/schema/mule/sfdc/current/mule-sfdc.xsd
+http://www.mulesoft.org/schema/mule/twitter http://www.mulesoft.org/schema/mule/twitter/2.4/mule-twitter.xsd
+http://www.mulesoft.org/schema/mule/ee/data-mapper http://www.mulesoft.org/schema/mule/ee/data-mapper/current/mule-data-mapper.xsd
+http://www.mulesoft.org/schema/mule/ee/tracking http://www.mulesoft.org/schema/mule/ee/tracking/current/mule-tracking-ee.xsd
+http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-current.xsd">
+    <sfdc:config name="Salesforce" username="poc.tester@mulesoft.com.poc" password="frensworkz" securityToken="5hdmNhcdfKc3EV6AU4hPXcGG" url="https://test.salesforce.com/services/Soap/u/28.0" doc:name="Salesforce">
+        <sfdc:connection-pooling-profile initialisationPolicy="INITIALISE_ONE" exhaustedAction="WHEN_EXHAUSTED_GROW"/>
+    </sfdc:config>
+    <twitter:config name="Twitter" accessKey="15818403-jCotW7AQdO1IFxBpCNHipr5uLvlUbdv4Iafaotruq" accessSecret="glSkSNiddu6raC478QIsTv4z3vdTVUtVZLgS4hIAW8NT1" consumerKey="jpdRj6etceTC74DekuJbJg" consumerSecret="zOHr3egSNa8ujaNW3rLFS0NMPeYT5yHaZd3NOIBEq4" doc:name="Twitter">
+        <twitter:connection-pooling-profile initialisationPolicy="INITIALISE_ONE" exhaustedAction="WHEN_EXHAUSTED_GROW"/>
+    </twitter:config>
+    <context:property-placeholder location="mule-app.properties"/>
+    <flow name="sfdc-twitter-pocFlow2" doc:name="sfdc-twitter-pocFlow2">
+        <poll doc:name="Poll">
+            <fixed-frequency-scheduler frequency="${duration.minute}" timeUnit="MINUTES" startDelay="${initial.delay.minute}"/>
+            <flow-ref name="sfdc-twitter-pocFlow1" doc:name="sfdc-twitter-pocFlow1"/>
+        </poll>
+        <logger message="Cycle completed!" level="INFO" doc:name="Logger"/>
+    </flow>
+    <flow name="sfdc-twitter-pocFlow1" doc:name="sfdc-twitter-pocFlow1">
+        <sfdc:get-updated config-ref="Salesforce"  doc:name="Get-updated" duration="${duration.minute}" type="Lead"/>
+        <expression-transformer expression="#[payload.ids]" doc:name="Expression"/>
+        <foreach doc:name="For Each">
+            <sfdc:query-single config-ref="Salesforce" query="Select Name, Company from Lead where id = '#[payload]'" doc:name="query-single"/>
+            <logger message="Map Payload: #[payload]" level="INFO" doc:name="Logger"/>
+            <expression-transformer expression="#[payload.Name + ' : ' + payload.Company]" doc:name="Expression"/>
+            <logger message="Transformed Payload: #[payload]" level="INFO" doc:name="Logger"/>
+            <twitter:update-status config-ref="Twitter" status="#[payload]" doc:name="Twitter"/>        
+ 		</foreach>
+    </flow>
+</mule>
