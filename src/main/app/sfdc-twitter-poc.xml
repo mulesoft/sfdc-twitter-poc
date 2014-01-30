@@ -10,13 +10,13 @@ http://www.mulesoft.org/schema/mule/twitter http://www.mulesoft.org/schema/mule/
 http://www.mulesoft.org/schema/mule/ee/data-mapper http://www.mulesoft.org/schema/mule/ee/data-mapper/current/mule-data-mapper.xsd
 http://www.mulesoft.org/schema/mule/ee/tracking http://www.mulesoft.org/schema/mule/ee/tracking/current/mule-tracking-ee.xsd
 http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-current.xsd">
+    <context:property-placeholder location="mule.properties"/>
     <sfdc:config name="Salesforce" username="poc.tester@mulesoft.com.poc" password="frensworkz" securityToken="5hdmNhcdfKc3EV6AU4hPXcGG" url="https://test.salesforce.com/services/Soap/u/28.0" doc:name="Salesforce">
         <sfdc:connection-pooling-profile initialisationPolicy="INITIALISE_ONE" exhaustedAction="WHEN_EXHAUSTED_GROW"/>
     </sfdc:config>
     <twitter:config name="Twitter" accessKey="15818403-jCotW7AQdO1IFxBpCNHipr5uLvlUbdv4Iafaotruq" accessSecret="glSkSNiddu6raC478QIsTv4z3vdTVUtVZLgS4hIAW8NT1" consumerKey="jpdRj6etceTC74DekuJbJg" consumerSecret="zOHr3egSNa8ujaNW3rLFS0NMPeYT5yHaZd3NOIBEq4" doc:name="Twitter">
         <twitter:connection-pooling-profile initialisationPolicy="INITIALISE_ONE" exhaustedAction="WHEN_EXHAUSTED_GROW"/>
     </twitter:config>
-    <context:property-placeholder location="mule-app.properties"/>
     <flow name="sfdc-twitter-pocFlow2" doc:name="sfdc-twitter-pocFlow2">
         <poll doc:name="Poll">
             <fixed-frequency-scheduler frequency="${duration.minute}" timeUnit="MINUTES" startDelay="${initial.delay.minute}"/>
