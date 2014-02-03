@@ -11,24 +11,24 @@ http://www.mulesoft.org/schema/mule/ee/data-mapper http://www.mulesoft.org/schem
 http://www.mulesoft.org/schema/mule/ee/tracking http://www.mulesoft.org/schema/mule/ee/tracking/current/mule-tracking-ee.xsd
 http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-current.xsd">
     <context:property-placeholder location="mule.properties"/>
-    <sfdc:config name="Salesforce" username="poc.tester@mulesoft.com.poc" password="frensworkz" securityToken="5hdmNhcdfKc3EV6AU4hPXcGG" url="https://test.salesforce.com/services/Soap/u/28.0" doc:name="Salesforce">
+    <sfdc:config name="Salesforce" username="adrian.hsieh+developer@mulesoft.com" password="frensworkz2014" securityToken="ApjE1O8kAKwiro10Wto37j47D"  doc:name="Salesforce">
         <sfdc:connection-pooling-profile initialisationPolicy="INITIALISE_ONE" exhaustedAction="WHEN_EXHAUSTED_GROW"/>
     </sfdc:config>
-    <twitter:config name="Twitter" accessKey="15818403-jCotW7AQdO1IFxBpCNHipr5uLvlUbdv4Iafaotruq" accessSecret="glSkSNiddu6raC478QIsTv4z3vdTVUtVZLgS4hIAW8NT1" consumerKey="jpdRj6etceTC74DekuJbJg" consumerSecret="zOHr3egSNa8ujaNW3rLFS0NMPeYT5yHaZd3NOIBEq4" doc:name="Twitter">
+    <twitter:config name="Twitter" accessKey="---" accessSecret="----" consumerKey="------" consumerSecret="--------" doc:name="Twitter">
         <twitter:connection-pooling-profile initialisationPolicy="INITIALISE_ONE" exhaustedAction="WHEN_EXHAUSTED_GROW"/>
     </twitter:config>
-    <flow name="sfdc-twitter-pocFlow2" doc:name="sfdc-twitter-pocFlow2">
+    <flow name="sfdc-twitter-pocFlow2" processingStrategy="synchronous" doc:name="sfdc-twitter-pocFlow2">
         <poll doc:name="Poll">
             <fixed-frequency-scheduler frequency="${duration.minute}" timeUnit="MINUTES" startDelay="${initial.delay.minute}"/>
-            <flow-ref name="sfdc-twitter-pocFlow1" doc:name="sfdc-twitter-pocFlow1"/>
+            <watermark variable="watermark" default-expression="#['2014-02-03T18:42:34.000Z']" selector="MAX" selector-expression="#[payload.LastModifiedDate]"/>
+            <sfdc:query config-ref="Salesforce" query="Select Name, Company, LastModifiedDate from Lead where LastModifiedDate &gt; #[flowVars['watermark']]" doc:name="query"/>
         </poll>
+        <logger level="INFO"/>
+        <flow-ref name="sfdc-twitter-pocFlow1" doc:name="sfdc-twitter-pocFlow1"/>
         <logger message="Cycle completed!" level="INFO" doc:name="Logger"/>
     </flow>
-    <flow name="sfdc-twitter-pocFlow1" doc:name="sfdc-twitter-pocFlow1">
-        <sfdc:get-updated config-ref="Salesforce"  doc:name="Get-updated" duration="${duration.minute}" type="Lead"/>
-        <expression-transformer expression="#[payload.ids]" doc:name="Expression"/>
+    <flow name="sfdc-twitter-pocFlow1" doc:name="sfdc-twitter-pocFlow1" processingStrategy="synchronous">
         <foreach doc:name="For Each">
-            <sfdc:query-single config-ref="Salesforce" query="Select Name, Company from Lead where id = '#[payload]'" doc:name="query-single"/>
             <logger message="Map Payload: #[payload]" level="INFO" doc:name="Logger"/>
             <expression-transformer expression="#[payload.Name + ' : ' + payload.Company]" doc:name="Expression"/>
             <logger message="Transformed Payload: #[payload]" level="INFO" doc:name="Logger"/>
